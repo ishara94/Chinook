@@ -67,7 +67,9 @@ else
     [Inject] IPlayListService playListService { get; set; }
     [Inject] ITracksServices tracksServices { get; set; }
     [Inject] IUserService userService { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+
+    [CascadingParameter] 
+    private Task<AuthenticationState> authenticationState { get; set; }
 
     private Chinook.ClientModels.Playlist Playlist;
     private string CurrentUserId;
@@ -98,7 +100,6 @@ else
     private void RemoveTrack(long trackId)
     {
         CloseInfoMessage();
-
     }
 
     private void CloseInfoMessage()

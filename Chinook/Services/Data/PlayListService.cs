@@ -11,12 +11,9 @@ namespace Chinook.Services.Data
     {
         private readonly IDbContextFactory<ChinookContext> _dbFactory;
         
-
         public PlayListService(IDbContextFactory<ChinookContext> dbFactory)
         {
-            _dbFactory = dbFactory;
-         
-
+            _dbFactory = dbFactory;       
         }
 
         public async Task<List<Chinook.Models.Playlist>> GetExistingPlaylists(string CurrentUserId)
@@ -35,7 +32,6 @@ namespace Chinook.Services.Data
         public async Task<Chinook.ClientModels.Playlist> GetPlayLists(long PlaylistId,string CurrentUserId)
         {
             using var dbContext = _dbFactory.CreateDbContext();
-
             var playLists = dbContext.Playlists
              .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
              .Where(p => p.PlaylistId == PlaylistId)
@@ -58,8 +54,8 @@ namespace Chinook.Services.Data
 
         public async Task<Chinook.Models.Playlist> CreateNewPlaylist(string CurrentUserId, string playlistName)
         {
-            using var context = _dbFactory.CreateDbContext();
-            var maxPlaylistId = context.Playlists.Max(p => p.PlaylistId);
+            using var dbContext = _dbFactory.CreateDbContext();
+            var maxPlaylistId = dbContext.Playlists.Max(p => p.PlaylistId);
 
             var playlist = new Chinook.Models.Playlist
             {
@@ -72,27 +68,26 @@ namespace Chinook.Services.Data
                 UserId = CurrentUserId,
                 Playlist = playlist
             };
-
-            context.UserPlaylists.Add(userPlaylist);
-            await context.SaveChangesAsync();         
+            dbContext.UserPlaylists.Add(userPlaylist);
+            await dbContext.SaveChangesAsync();         
             return playlist;
         }
 
-        public async Task<bool> AddTrackToPlaylist(long playlistId, long trackId)
+        public async Task<string> AddTrackToPlaylist(long playlistId, long trackId)
         {
-            using var context = _dbFactory.CreateDbContext();
-            var playlist = await context.Playlists.FindAsync(playlistId);
-            var track = await context.Tracks.FindAsync(trackId);
+            using var dbContext = _dbFactory.CreateDbContext();
+            var playlist = await dbContext.Playlists.FindAsync(playlistId);
+            var track = await dbContext.Tracks.FindAsync(trackId);
 
             if (playlist == null || track == null)
             {
-                return false;
+                return null;
             }
 
             playlist.Tracks.Add(track);
-            await context.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
 
-            return true;
+            return playlist.Name;
         }
     }
 }

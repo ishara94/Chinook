@@ -3,6 +3,7 @@
 
 @using Chinook.Models
 @using Chinook.Services.Data.Interfaces;
+@using Chinook.Services;
 @using Microsoft.EntityFrameworkCore
 
 <PageTitle>Index</PageTitle>
@@ -53,19 +54,9 @@ else
     private void FilterArtists(ChangeEventArgs e)
     {
         searchTerm = e.Value.ToString();
-        ApplyFilter();
+        FilteredArtists = new SerachServices().ApplyFilter(Artists,a=>a.Name,searchTerm);
     }
-
-    private void ApplyFilter()
-    {
-        FilteredArtists = Artists?.Where(artist =>
-           string.IsNullOrWhiteSpace(searchTerm) ||
-           artist.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
-       ).OrderByDescending(artist =>
-           artist.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) == 0
-       ).ToList();
-    }
-   
+  
     private void HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Backspace")

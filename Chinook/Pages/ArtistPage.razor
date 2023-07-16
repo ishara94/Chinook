@@ -61,17 +61,19 @@ else
 }
 
 @code {
-    [Parameter] public long ArtistId { get; set; }
-    [CascadingParameter] 
-    private Task<AuthenticationState> authenticationState { get; set; }   
     [Inject] IArtistService artistService { get; set; }
     [Inject] ITracksServices tracksServices { get; set; }
     [Inject] IPlayListService playListService { get; set; }
     [Inject] IUserService userService { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    [Parameter] public long ArtistId { get; set; }
+
     private Modal PlaylistDialog { get; set; }
     private long SelectedPlaylistId { get; set; }
     private string NewPlaylistName;
-
     private Artist Artist;
     private List<PlaylistTrack> Tracks;
     private PlaylistTrack SelectedTrack;
@@ -81,12 +83,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await InvokeAsync(StateHasChanged);
-        // No DI needs yet for User Service
+        await InvokeAsync(StateHasChanged);    
         CurrentUserId =  await userService.GetUserId(authenticationState);
 
         Artist = await artistService.GetArtist(ArtistId);
         Tracks = await tracksServices.GetTracks(Artist,CurrentUserId);
+
         ExistingPlaylists = await playListService.GetExistingPlaylists(CurrentUserId);
     }
 
@@ -96,7 +98,7 @@ else
         {
             SelectedPlaylistId = playlistId;
         }
-        // if predefined lists
+
         else if (e.Value !=null)
         {
             var match = Regex.Match(e.Value.ToString(), @"^([\r\n\s]*Playlist\s)(\d+)");
@@ -111,9 +113,9 @@ else
         }
     }
 
-    private void FavoriteTrack(long trackId)
+    private async Task FavoriteTrack(long trackId)
     {
-        tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
+        await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
     }
@@ -135,19 +137,19 @@ else
     private async Task AddTrackToPlaylist()
     {
         CloseInfoMessage();
-
+        string playListName = string.Empty;
         if (!string.IsNullOrWhiteSpace(NewPlaylistName))
         {         
            // Create a new playlist and add the track to it
-           var newPlaylist =await playListService.CreateNewPlaylist(CurrentUserId, NewPlaylistName);
-           await playListService.AddTrackToPlaylist(newPlaylist.PlaylistId, SelectedTrack.TrackId);
+            var newPlaylist =await playListService.CreateNewPlaylist(CurrentUserId, NewPlaylistName);
+            playListName= await playListService.AddTrackToPlaylist(newPlaylist.PlaylistId, SelectedTrack.TrackId);
         }
         else if (SelectedPlaylistId != 0)
         {
             // Add the track to the selected existing playlist
-           await playListService.AddTrackToPlaylist(SelectedPlaylistId, SelectedTrack.TrackId);
+            playListName= await playListService.AddTrackToPlaylist(SelectedPlaylistId, SelectedTrack.TrackId);
         }
-        InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {{playlist name}}.";
+        InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {playListName}.";
         PlaylistDialog.Close();
     }
 

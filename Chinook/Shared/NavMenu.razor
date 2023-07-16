@@ -42,26 +42,24 @@
 </div>
    
 @code {
-    private bool collapseNavMenu = true;
     [Inject] IPlayListService playListService { get; set; }
     [Inject] IUserService userService { get; set; }
-    private string CurrentUserId;
     [Inject] private NavigationManager NavigationManager { get; set; }
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
-    private List<Chinook.Models.Playlist> ExistingPlaylists { get; set; } = new List<Chinook.Models.Playlist>();
 
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    private bool collapseNavMenu = true;
+    private string CurrentUserId;   
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private List<Chinook.Models.Playlist> ExistingPlaylists { get; set; } = new List<Chinook.Models.Playlist>();
+    
     protected override async Task OnInitializedAsync()
     {
         CurrentUserId = await userService.GetUserId(authenticationState);
         ExistingPlaylists = await playListService.GetExistingPlaylists(CurrentUserId);
     }
-    //private void ReloadPage(int playlistId)
-    //{
-    //    string url = $"playlist/{playlistId}";
-    //    NavigationManager.NavigateTo(url);
-    //    NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
-    //}
+   
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
@@ -71,7 +69,7 @@
     {
         var url = $"playlist/{playlistId}";
         NavigationManager.NavigateTo(url, forceLoad: true);
-        await Task.Delay(100); // Wait for a short duration to allow the page to reload
+        await Task.Delay(100);
     }
   
 }

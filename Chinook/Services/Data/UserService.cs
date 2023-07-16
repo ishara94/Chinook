@@ -6,7 +6,6 @@ namespace Chinook.Services.Data
 {
     public class UserService : IUserService
     {
-        // Move this out as future improvement.(to support role base and DB level authorization)
         public async Task<string> GetUserId(Task<AuthenticationState> authenticationState)
         {
             var user = (await authenticationState).User;
