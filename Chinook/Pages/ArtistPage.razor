@@ -65,7 +65,7 @@ else
     [Inject] ITracksServices tracksServices { get; set; }
     [Inject] IPlayListService playListService { get; set; }
     [Inject] IUserService userService { get; set; }
-
+    @inject NavigationManager navigationManager;
     [CascadingParameter]
     private Task<AuthenticationState> authenticationState { get; set; }
 
@@ -118,13 +118,15 @@ else
         await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+        await ReloadPage();
     }
 
-    private void UnfavoriteTrack(long trackId)
+    private async Task UnfavoriteTrack(long trackId)
     {
-        tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, false);
+        await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, false);
         var track = Tracks.FirstOrDefault(t => t.TrackId == trackId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+        await ReloadPage();
     }
 
     private void OpenPlaylistDialog(long trackId)
@@ -151,7 +153,15 @@ else
         }
         InfoMessage = $"Track {Artist.Name} - {SelectedTrack.AlbumTitle} - {SelectedTrack.TrackName} added to playlist {playListName}.";
         PlaylistDialog.Close();
+        await ReloadPage();
     }
+
+    private async Task ReloadPage()
+    {
+        await Task.Delay(500);
+        navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
+    }
+
 
     private void CloseInfoMessage()
     {

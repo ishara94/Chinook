@@ -8,9 +8,18 @@ namespace Chinook.Services.Data
     {
         public async Task<string> GetUserId(Task<AuthenticationState> authenticationState)
         {
-            var user = (await authenticationState).User;
-            var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-            return userId;
+            try
+            {
+                // Retrieve the authentication state
+                var user = (await authenticationState).User;
+                var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
+
+                return userId;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while retrieving the user's identifier.", ex);
+            }
         }
     }
 }

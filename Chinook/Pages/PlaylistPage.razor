@@ -53,7 +53,7 @@ else
                                 }
 
                             }
-                            <a href="#" class="m-1" title="Remove from this playlist" @onclick="@(() => RemoveTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-trash"></i></a>
+                            <a href="#" class="m-1" title="Remove from this playlist" @onclick="@(() => RemoveTrack(track.TrackId,PlaylistId))" @onclick:preventDefault><i class="bi bi-trash"></i></a>
                         </div>
                     </td>
                 </tr>
@@ -67,7 +67,7 @@ else
     [Inject] IPlayListService playListService { get; set; }
     [Inject] ITracksServices tracksServices { get; set; }
     [Inject] IUserService userService { get; set; }
-
+    @inject NavigationManager navigationManager;
     [CascadingParameter] 
     private Task<AuthenticationState> authenticationState { get; set; }
 
@@ -83,23 +83,34 @@ else
         Playlist = await playListService.GetPlayLists(PlaylistId, CurrentUserId);
     }
 
-    private void FavoriteTrack(long trackId)
+    private async Task FavoriteTrack(long trackId)
     {
-        tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
+        await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+        await ReloadPage();
     }
 
-    private void UnfavoriteTrack(long trackId)
+    private async Task UnfavoriteTrack(long trackId)
     {
-        tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId,false);
+        await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId,false);
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
         InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+        await ReloadPage();
     }
 
-    private void RemoveTrack(long trackId)
+    private async Task RemoveTrack(long trackId,long playListId)
     {
-        CloseInfoMessage();
+        await tracksServices.RemoveTrackFromPlayList(trackId,playListId);
+        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
+        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist";
+        await ReloadPage();
+    }
+
+    private async Task ReloadPage()
+    {
+        await Task.Delay(500);
+        navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
     }
 
     private void CloseInfoMessage()
