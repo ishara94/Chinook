@@ -26,7 +26,13 @@
                     <strong>Request ID:</strong> <code>@Model.RequestId</code>
                 </p>
             }
-
+            @*Added this line to Display the Exception*@
+            @if (Request.Query.ContainsKey("message"))
+            {
+                <p>
+                    <strong>Error Message:</strong> @Request.Query["message"]
+                </p>
+            }
             <h3>Development Mode</h3>
             <p>
                 Swapping to the <strong>Development</strong> environment displays detailed information about the error that occurred.

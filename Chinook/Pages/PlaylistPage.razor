@@ -6,6 +6,7 @@
 @using Chinook.Services.Data.Interfaces;
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
+@using System.Web;
 
 <h1>Playlist <strong>@Playlist.Name</strong></h1>
 
@@ -77,23 +78,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {   // Handle any Exception throw when Initializing
+          // Handle any Exception throw when Initializing
             await HandleExceptionAsync(async () =>
             {
                 CurrentUserId = await userService.GetUserId(authenticationState);
 
                 await InvokeAsync(StateHasChanged);
                 Playlist = await playListService.GetPlayLists(PlaylistId, CurrentUserId);               
-            });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }
-
-       
+            });               
     }
 
     private async Task HandleExceptionAsync(Func<Task> action)
@@ -102,28 +94,24 @@ else
         {
             await action();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Redirect to the Error page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
+            var errorMessage = HttpUtility.UrlEncode(ex.Message);
+            navigationManager.NavigateTo($"/Error?message={errorMessage}", forceLoad: true);
         }
     }
 
     private async Task FavoriteTrack(long trackId)
     {
-         try
-        {   // Handle any Exception throw when Initializing
+           // Handle any Exception throw when Initializing
             await HandleExceptionAsync(async () =>
             {
                 await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
                 await TrackMessageDisplay(trackId, "added", true);                             
             });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }      
+        
+           
     }
 
     private async Task TrackMessageDisplay(long trackId, string message,bool isFavourite)
@@ -141,37 +129,22 @@ else
 
     private async Task UnfavoriteTrack(long trackId)
     {
-        try
-        {   // Handle any Exception throw when Initializing
+          // Handle any Exception throw when Initializing
             await HandleExceptionAsync(async () =>
             {
                 await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, false);
                 await TrackMessageDisplay(trackId, "removed", true);                            
-            });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }
-       
+            });     
     }
 
     private async Task RemoveTrack(long trackId,long playListId)
     {
-        try
-        {   // Handle any Exception throw when Initializing
-            await HandleExceptionAsync(async () =>
-            {
-                await tracksServices.RemoveTrackFromPlayList(trackId, playListId);
-                await TrackMessageDisplay(trackId, "removed", false);                             
-            });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }    
+     // Handle any Exception throw when Initializing
+     await HandleExceptionAsync(async () =>
+           {
+            await tracksServices.RemoveTrackFromPlayList(trackId, playListId);
+            await TrackMessageDisplay(trackId, "removed", false);                             
+            });               
     }
 
     private async Task ReloadPage()

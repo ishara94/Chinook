@@ -7,6 +7,7 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
 @using System.Text.RegularExpressions;
+@using System.Web;
 
 @if (!string.IsNullOrWhiteSpace(InfoMessage))
 {
@@ -82,8 +83,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {   // Handle any Exception throw when Initializing             
+          // Handle any Exception throw when Initializing             
             await HandleExceptionAsync(async () =>
             {
               await InvokeAsync(StateHasChanged);
@@ -91,16 +91,9 @@ else
 
               Artist = await artistService.GetClientArtist(ArtistId);
               Tracks = await tracksServices.GetTracks(Artist, CurrentUserId);
-               
-              ExistingPlaylists = await playListService.GetExistingPlaylists(CurrentUserId);
-           });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }
-        
+                
+              ExistingPlaylists = await playListService.GetExistingPlaylists(CurrentUserId);                                
+           });       
     }
 
     private async Task HandleExceptionAsync(Func<Task> action)
@@ -109,10 +102,11 @@ else
         {
             await action();
         }
-        catch (Exception)
+        catch (Exception ex)
         {           
             // Redirect to the Error page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
+            var errorMessage = HttpUtility.UrlEncode(ex.Message);
+            navigationManager.NavigateTo($"/Error?message={errorMessage}", forceLoad: true);
         }
     }
 
@@ -138,39 +132,24 @@ else
     }
 
     private async Task FavoriteTrack(long trackId)
-    {
-        try
-        {
+    {      
           await HandleExceptionAsync(async () =>
            {                 
              await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
              await TrackMessageDisplay(trackId, "added");
                  
-           });           
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }
-     
+           });               
     }
  
     private async Task UnfavoriteTrack(long trackId)
     {
-        try
-        {
+        
             await HandleExceptionAsync(async () =>
               {                 
                   await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, false);
                   await TrackMessageDisplay(trackId, "removed");                
               });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }       
+            
     }
 
     private async Task TrackMessageDisplay(long trackId, string message)
@@ -190,9 +169,7 @@ else
     private async Task AddTrackToPlaylist()
     {
         CloseInfoMessage();
-        try
-        {         
-            await HandleExceptionAsync(async () =>
+          await HandleExceptionAsync(async () =>
               {                 
                   string playListName = string.Empty;
                   if (!string.IsNullOrWhiteSpace(NewPlaylistName))
@@ -210,12 +187,7 @@ else
                   PlaylistDialog.Close();
                   await ReloadPage();
               });
-        }
-        catch (Exception)
-        {
-            // Redirect page back to Error Page
-            navigationManager.NavigateTo("/Error", forceLoad: true);
-        }
+        
        
     }
 
