@@ -1,7 +1,7 @@
 ﻿@page "/playlist/{PlaylistId:long}"
 @attribute [Authorize]
 
-@using Chinook.Models
+@using Chinook.ClientModels;
 @using Chinook.Services.Data;
 @using Chinook.Services.Data.Interfaces;
 @using Microsoft.EntityFrameworkCore
@@ -71,7 +71,7 @@ else
     [CascadingParameter] 
     private Task<AuthenticationState> authenticationState { get; set; }
 
-    private Chinook.ClientModels.Playlist Playlist;
+    private Playlist Playlist;
     private string CurrentUserId;
     private string InfoMessage;
 

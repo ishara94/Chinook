@@ -1,14 +1,11 @@
 ﻿using Chinook.ClientModels;
-using Chinook.Models;
-using NuGet.DependencyResolver;
 
-namespace Chinook.Services.Data.Interfaces
+namespace Chinook.Services.Data.Interfaces;
+
+public interface ITracksServices
 {
-    public interface ITracksServices
-    {
-        Task<List<PlaylistTrack>> GetTracks(Artist artist, string currentUserId);
-        Task UpdateFavoriteTrackStatus(long trackId, string CurrentUserId, bool isfavourite);
+    Task<List<PlaylistTrack>> GetTracks(ArtistDto artist, string currentUserId);
+    Task UpdateFavoriteTrackStatus(long trackId, string CurrentUserId, bool isfavourite);
 
-        Task RemoveTrackFromPlayList(long trackId,long playListId);
-    }
+    Task RemoveTrackFromPlayList(long trackId, long playListId);
 }

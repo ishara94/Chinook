@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 
-namespace Chinook.Services.Data.Interfaces
+namespace Chinook.Services.Data.Interfaces;
+
+public interface IUserService
 {
-    public interface IUserService
-    {
-        Task<string> GetUserId(Task<AuthenticationState> authenticationState);
-    }
+    Task<string> GetUserId(Task<AuthenticationState> authenticationState);
 }

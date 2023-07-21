@@ -1,7 +1,6 @@
 ﻿@page "/artist/{ArtistId:long}"
 @attribute [Authorize]
 
-@using Chinook.Models
 @using Chinook.ClientModels
 @using Chinook.Services.Data;
 @using Chinook.Services.Data.Interfaces;
@@ -74,19 +73,19 @@ else
     private Modal PlaylistDialog { get; set; }
     private long SelectedPlaylistId { get; set; }
     private string NewPlaylistName;
-    private Artist Artist;
+    private ArtistDto Artist;
     private List<PlaylistTrack> Tracks;
     private PlaylistTrack SelectedTrack;
     private string InfoMessage;
     private string CurrentUserId;
-    private List<Chinook.Models.Playlist> ExistingPlaylists;
+    private List<Playlist> ExistingPlaylists;
 
     protected override async Task OnInitializedAsync()
     {
         await InvokeAsync(StateHasChanged);    
         CurrentUserId =  await userService.GetUserId(authenticationState);
 
-        Artist = await artistService.GetArtist(ArtistId);
+        Artist = await artistService.GetClientArtist(ArtistId);
         Tracks = await tracksServices.GetTracks(Artist,CurrentUserId);
 
         ExistingPlaylists = await playListService.GetExistingPlaylists(CurrentUserId);

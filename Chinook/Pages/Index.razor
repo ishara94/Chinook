@@ -1,7 +1,7 @@
 ﻿@page "/"
 @attribute [Authorize]
 
-@using Chinook.Models
+@using Chinook.ClientModels;
 @using Chinook.Services.Data.Interfaces;
 @using Chinook.Services;
 @using Microsoft.EntityFrameworkCore
@@ -9,10 +9,10 @@
 <PageTitle>Index</PageTitle>
 <div class="d-flex align-items-center justify-content-between">
     <h1>Artists</h1>
-    <input type="text" placeholder="Search artist" @bind="@searchTerm" @oninput="FilterArtists" />
+    <input type="text" placeholder="Search artist" @bind="@searchTerm" @oninput="FilterArtists" @onkeydown="HandleKeyDown" />
 </div>
 
-@if (Artists == null)
+@if (FilteredArtists == null)
 {
     <Loading />
 }
@@ -30,7 +30,7 @@ else
             {
                 <tr>
                     <td><a href="Artist/@artist.ArtistId">@artist.Name</a></td>
-                    <td>@artist.Albums.Count()</td>
+                    <td>@artist.NumberOfAlbums</td>
                 </tr>
             }
         </tbody>
@@ -38,15 +38,16 @@ else
 }
 
 @code {
-    private List<Artist> Artists;
-    private List<Artist> FilteredArtists;
-    private List<Artist> PreviousFilteredArtists;
+    private List<ArtistDto> Artists;
+    private List<ArtistDto> FilteredArtists;
+    private List<ArtistDto> PreviousFilteredArtists;
     private string searchTerm;
     [Inject] IArtistService artistService { get; set; }
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
         await InvokeAsync(StateHasChanged);
-        Artists = await artistService.GetArtists();
+        Artists = await artistService.GetClientArtists();
         FilteredArtists = Artists;
         PreviousFilteredArtists = Artists;
     }
@@ -54,9 +55,9 @@ else
     private void FilterArtists(ChangeEventArgs e)
     {
         searchTerm = e.Value.ToString();
-        FilteredArtists = new SerachServices().ApplyFilter(Artists,a=>a.Name,searchTerm);
+        FilteredArtists = new SerachServices().ApplyFilter(Artists, a => a.Name, searchTerm);
     }
-  
+
     private void HandleKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Backspace")

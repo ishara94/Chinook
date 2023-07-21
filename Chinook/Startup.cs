@@ -22,7 +22,7 @@ public class Startup
 
         services.AddDefaultIdentity<ChinookUser>(options => options.SignIn.RequireConfirmedAccount = true)
             .AddEntityFrameworkStores<ChinookContext>();
-
+        services.AddAutoMapper(typeof(Startup));
         services.AddRazorPages();
         services.AddServerSideBlazor();
 

@@ -1,4 +1,4 @@
-﻿@using Chinook.Models;
+﻿@using Chinook.ClientModels;
 @using Chinook.Services.Data.Interfaces;
 @using Chinook.Services.Data;
 <div class="top-row ps-3 navbar navbar-dark">
@@ -52,7 +52,7 @@
     private bool collapseNavMenu = true;
     private string CurrentUserId;   
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    private List<Chinook.Models.Playlist> ExistingPlaylists { get; set; } = new List<Chinook.Models.Playlist>();
+    private List<Playlist> ExistingPlaylists { get; set; } = new List<Playlist>();
     
     protected override async Task OnInitializedAsync()
     {
