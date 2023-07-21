@@ -43,13 +43,25 @@ else
     private List<ArtistDto> PreviousFilteredArtists;
     private string searchTerm;
     [Inject] IArtistService artistService { get; set; }
+    @inject NavigationManager navigationManager;
 
     protected override async Task OnInitializedAsync()
     {
-        await InvokeAsync(StateHasChanged);
-        Artists = await artistService.GetClientArtists();
-        FilteredArtists = Artists;
-        PreviousFilteredArtists = Artists;
+        try
+        {   // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await InvokeAsync(StateHasChanged);
+                Artists = artistService.GetClientArtists();
+                FilteredArtists = Artists;
+                PreviousFilteredArtists = Artists;               
+            });
+        }
+        catch (Exception)
+        {
+            // Redirect page back to Error Page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
+        }     
     }
 
     private void FilterArtists(ChangeEventArgs e)
@@ -68,6 +80,19 @@ else
         else
         {
             PreviousFilteredArtists = FilteredArtists;
+        }
+    }
+
+    private async Task HandleExceptionAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception)
+        {
+            // Redirect to the Error page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
         }
     }
 }

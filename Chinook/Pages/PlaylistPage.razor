@@ -77,34 +77,101 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentUserId = await userService.GetUserId(authenticationState);
+        try
+        {   // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                CurrentUserId = await userService.GetUserId(authenticationState);
 
-        await InvokeAsync(StateHasChanged);
-        Playlist = await playListService.GetPlayLists(PlaylistId, CurrentUserId);
+                await InvokeAsync(StateHasChanged);
+                Playlist = await playListService.GetPlayLists(PlaylistId, CurrentUserId);               
+            });
+        }
+        catch (Exception)
+        {
+            // Redirect page back to Error Page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
+        }
+
+       
+    }
+
+    private async Task HandleExceptionAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception)
+        {
+            // Redirect to the Error page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
+        }
     }
 
     private async Task FavoriteTrack(long trackId)
     {
-        await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
+         try
+        {   // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
+                await TrackMessageDisplay(trackId, "added", true);                             
+            });
+        }
+        catch (Exception)
+        {
+            // Redirect page back to Error Page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
+        }      
+    }
+
+    private async Task TrackMessageDisplay(long trackId, string message,bool isFavourite)
+    {
+        var listName = string.Empty;
+        if (isFavourite)
+        {
+            listName = "Favorites.";
+        }
+
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} {message} to playlist {listName}";
         await ReloadPage();
     }
 
     private async Task UnfavoriteTrack(long trackId)
     {
-        await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId,false);
-        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
-        await ReloadPage();
+        try
+        {   // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, false);
+                await TrackMessageDisplay(trackId, "removed", true);                            
+            });
+        }
+        catch (Exception)
+        {
+            // Redirect page back to Error Page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
+        }
+       
     }
 
     private async Task RemoveTrack(long trackId,long playListId)
     {
-        await tracksServices.RemoveTrackFromPlayList(trackId,playListId);
-        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist";
-        await ReloadPage();
+        try
+        {   // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await tracksServices.RemoveTrackFromPlayList(trackId, playListId);
+                await TrackMessageDisplay(trackId, "removed", false);                             
+            });
+        }
+        catch (Exception)
+        {
+            // Redirect page back to Error Page
+            navigationManager.NavigateTo("/Error", forceLoad: true);
+        }    
     }
 
     private async Task ReloadPage()

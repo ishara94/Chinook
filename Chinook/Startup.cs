@@ -1,4 +1,5 @@
 ﻿using Chinook.Areas.Identity;
+using Chinook.Middleware;
 using Chinook.Models;
 using Chinook.Services.Data;
 using Chinook.Services.Data.Interfaces;
@@ -44,6 +45,7 @@ public class Startup
             app.UseExceptionHandler("/Error");
             app.UseHsts();
         }
+        app.UseMiddleware<ErrorMiddleware>();
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();
