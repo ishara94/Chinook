@@ -7,7 +7,7 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<Artist, ArtistDto>()
+        CreateMap<Artist, Artist>()
             .ForMember(dest => dest.NumberOfAlbums, opt => opt.MapFrom(src => src.Albums.Count));
 
         CreateMap<Models.Playlist, ClientModels.Playlist>();

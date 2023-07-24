@@ -17,7 +17,7 @@ public class ArtistService : IArtistService
         _mapper = mapper;
     }
 
-    public async Task<ArtistDto> GetClientArtist(long artistId)
+    public async Task<ClientModels.Artist> GetClientArtist(long artistId)
     {
         using var dbContext = _dbFactory.CreateDbContext();
         var artist = await dbContext.Artists.Include(p => p.Albums).SingleOrDefaultAsync(a => a.ArtistId == artistId);
@@ -25,7 +25,7 @@ public class ArtistService : IArtistService
         // Data Mapping using automapper
         try
         {
-            var clientArtist = _mapper.Map<ArtistDto>(artist);
+            var clientArtist = _mapper.Map<ClientModels.Artist>(artist);
             return clientArtist;
 
         }
@@ -35,16 +35,16 @@ public class ArtistService : IArtistService
         }
     }
 
-    public List<ArtistDto> GetClientArtists()
+    public List<ClientModels.Artist> GetClientArtists()
     {
         using var dbContext = _dbFactory.CreateDbContext();
-        var updatedArtistList = new List<ArtistDto>();
+        var updatedArtistList = new List<ClientModels.Artist>();
 
         try
         {
             foreach (var artist in dbContext.Artists.Include(a => a.Albums))
             {
-                var clientArtist = _mapper.Map<ArtistDto>(artist);
+                var clientArtist = _mapper.Map<ClientModels.Artist>(artist);
                 updatedArtistList.Add(clientArtist);
             }
 

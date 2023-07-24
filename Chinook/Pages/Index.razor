@@ -39,9 +39,9 @@ else
 }
 
 @code {
-    private List<ArtistDto> Artists;
-    private List<ArtistDto> FilteredArtists;
-    private List<ArtistDto> PreviousFilteredArtists;
+    private List<Artist> Artists;
+    private List<Artist> FilteredArtists;
+    private List<Artist> PreviousFilteredArtists;
     private string searchTerm;
     [Inject] IArtistService artistService { get; set; }
     @inject NavigationManager navigationManager;

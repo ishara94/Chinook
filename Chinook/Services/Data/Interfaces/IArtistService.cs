@@ -5,7 +5,7 @@ namespace Chinook.Services.Data.Interfaces;
 
 public interface IArtistService
 {
-    Task<ArtistDto> GetClientArtist(long artistId);
-    List<ArtistDto> GetClientArtists();
+    Task<ClientModels.Artist> GetClientArtist(long artistId);
+    List<ClientModels.Artist> GetClientArtists();
     Task<List<Album>> GetAlbumsForArtist(long artistId);
 }

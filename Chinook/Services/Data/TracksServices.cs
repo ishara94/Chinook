@@ -15,7 +15,7 @@ public class TracksServices : ITracksServices
     }
 
     // Retrieves the tracks
-    public async Task<List<PlaylistTrack>> GetTracks(ArtistDto artist, string currentUserId)
+    public async Task<List<PlaylistTrack>> GetTracks(ClientModels.Artist artist, string currentUserId)
     {
         try
         {
