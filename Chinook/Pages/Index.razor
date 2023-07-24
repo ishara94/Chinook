@@ -1,14 +1,19 @@
 ﻿@page "/"
 @attribute [Authorize]
 
-@using Chinook.Models
+@using Chinook.ClientModels;
+@using Chinook.Services.Data.Interfaces;
+@using Chinook.Services;
 @using Microsoft.EntityFrameworkCore
+@using System.Web;
 
 <PageTitle>Index</PageTitle>
+<div class="d-flex align-items-center justify-content-between">
+    <h1>Artists</h1>
+    <input type="text" placeholder="Search artist" @bind="@searchTerm" @oninput="FilterArtists" @onkeydown="HandleKeyDown" />
+</div>
 
-<h1>Artists</h1>
-
-@if (Artists == null)
+@if (FilteredArtists == null)
 {
     <Loading />
 }
@@ -22,11 +27,11 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var artist in Artists)
+            @foreach (var artist in FilteredArtists)
             {
                 <tr>
                     <td><a href="Artist/@artist.ArtistId">@artist.Name</a></td>
-                    <td>@artist.Albums.Count()</td>
+                    <td>@artist.NumberOfAlbums</td>
                 </tr>
             }
         </tbody>
@@ -34,25 +39,55 @@ else
 }
 
 @code {
-    private List<Artist> Artists;
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
+    private List<ArtistDto> Artists;
+    private List<ArtistDto> FilteredArtists;
+    private List<ArtistDto> PreviousFilteredArtists;
+    private string searchTerm;
+    [Inject] IArtistService artistService { get; set; }
+    @inject NavigationManager navigationManager;
 
-    protected override async Task OnInitializedAsync() {
-        await InvokeAsync(StateHasChanged);
-        Artists = await GetArtists();
-    }
-
-    public async Task<List<Artist>> GetArtists()
-    {   
-        var dbContext = await DbFactory.CreateDbContextAsync();
-        var users = dbContext.Users.Include(a => a.UserPlaylists).ToList();
-        
-        return dbContext.Artists.ToList();
-    }
-
-    public async Task<List<Album>> GetAlbumsForArtist(int artistId)
+    protected override async Task OnInitializedAsync()
     {
-        var dbContext = await DbFactory.CreateDbContextAsync();
-        return dbContext.Albums.Where(a => a.ArtistId == artistId).ToList();
+         // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await InvokeAsync(StateHasChanged);
+                Artists = artistService.GetClientArtists();
+                FilteredArtists = Artists;
+                PreviousFilteredArtists = Artists;               
+            });          
+    }
+
+    private void FilterArtists(ChangeEventArgs e)
+    {
+        searchTerm = e.Value.ToString();
+        FilteredArtists = new SerachServices().ApplyFilter(Artists, a => a.Name, searchTerm);
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace")
+        {
+            searchTerm = "";
+            FilteredArtists = PreviousFilteredArtists;
+        }
+        else
+        {
+            PreviousFilteredArtists = FilteredArtists;
+        }
+    }
+
+    private async Task HandleExceptionAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            // Redirect to the Error page
+            var errorMessage = HttpUtility.UrlEncode(ex.Message);
+            navigationManager.NavigateTo($"/Error?message={errorMessage}", forceLoad: true);
+        }
     }
 }

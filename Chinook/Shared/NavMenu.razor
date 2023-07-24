@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Chinook.ClientModels;
+@using Chinook.Services.Data.Interfaces;
+@using Chinook.Services.Data;
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Chinook</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -15,23 +18,58 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-@* 
-            <NavLink class="nav-link" href="playlist/playlistnumber">
-                <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>My favorite tracks
-            </NavLink>
-*@
-</div>
-
+            <div class="navbar">
+                <a class="navbar-link" href="#">
+                    <i class="bi bi-list me-3" style="font-size: 1.25em"></i>Playlist
+                </a>
+                <div class="navbar-dropdown">
+                    <div class="nav-item px-3">
+                        
+                            <div class="navbar-dropdown">
+                                @foreach (var playlist in ExistingPlaylists)
+                                {
+                                <a class="nav-link" href="@($"playlist/{playlist.PlaylistId}")" @onclick="() => ReloadPage(playlist.PlaylistId)">
+                                    <i class="bi bi-music-note-list me-3" style="font-size: 1.25em"></i>@playlist.Name
+                                </a>
+                                }
+                            </div>
+                        </div>
+                  
+                </div>
+            </div>
+        </div>
     </nav>
 </div>
-
+   
 @code {
+    [Inject] IPlayListService playListService { get; set; }
+    [Inject] IUserService userService { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
     private bool collapseNavMenu = true;
-
+    private string CurrentUserId;   
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
+    private List<Playlist> ExistingPlaylists { get; set; } = new List<Playlist>();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUserId = await userService.GetUserId(authenticationState);
+        ExistingPlaylists = await playListService.GetExistingPlaylists(CurrentUserId);
+    }
+   
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
+
+    private async Task ReloadPage(long playlistId)
+    {
+        var url = $"playlist/{playlistId}";
+        NavigationManager.NavigateTo(url, forceLoad: true);
+        await Task.Delay(100);
+    }
+  
 }

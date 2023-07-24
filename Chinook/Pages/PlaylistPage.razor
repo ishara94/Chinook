@@ -1,9 +1,12 @@
 ﻿@page "/playlist/{PlaylistId:long}"
 @attribute [Authorize]
 
-@using Chinook.Models
+@using Chinook.ClientModels;
+@using Chinook.Services.Data;
+@using Chinook.Services.Data.Interfaces;
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims;
+@using System.Web;
 
 <h1>Playlist <strong>@Playlist.Name</strong></h1>
 
@@ -51,7 +54,7 @@ else
                                 }
 
                             }
-                            <a href="#" class="m-1" title="Remove from this playlist" @onclick="@(() => RemoveTrack(track.TrackId))" @onclick:preventDefault><i class="bi bi-trash"></i></a>
+                            <a href="#" class="m-1" title="Remove from this playlist" @onclick="@(() => RemoveTrack(track.TrackId,PlaylistId))" @onclick:preventDefault><i class="bi bi-trash"></i></a>
                         </div>
                     </td>
                 </tr>
@@ -62,61 +65,92 @@ else
 
 @code {
     [Parameter] public long PlaylistId { get; set; }
-    [Inject] IDbContextFactory<ChinookContext> DbFactory { get; set; }
-    [CascadingParameter] private Task<AuthenticationState> authenticationState { get; set; }
+    [Inject] IPlayListService playListService { get; set; }
+    [Inject] ITracksServices tracksServices { get; set; }
+    [Inject] IUserService userService { get; set; }
+    @inject NavigationManager navigationManager;
+    [CascadingParameter] 
+    private Task<AuthenticationState> authenticationState { get; set; }
 
-    private Chinook.ClientModels.Playlist Playlist;
+    private Playlist Playlist;
     private string CurrentUserId;
     private string InfoMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentUserId = await GetUserId();
+          // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                CurrentUserId = await userService.GetUserId(authenticationState);
 
-        await InvokeAsync(StateHasChanged);
-        var DbContext = await DbFactory.CreateDbContextAsync();
-
-        Playlist = DbContext.Playlists
-            .Include(a => a.Tracks).ThenInclude(a => a.Album).ThenInclude(a => a.Artist)
-            .Where(p => p.PlaylistId == PlaylistId)
-            .Select(p => new ClientModels.Playlist()
-                {
-                    Name = p.Name,
-                    Tracks = p.Tracks.Select(t => new ClientModels.PlaylistTrack()
-                    {
-                        AlbumTitle = t.Album.Title,
-                        ArtistName = t.Album.Artist.Name,
-                        TrackId = t.TrackId,
-                        TrackName = t.Name,
-                        IsFavorite = t.Playlists.Where(p => p.UserPlaylists.Any(up => up.UserId == CurrentUserId && up.Playlist.Name == "Favorites")).Any()
-                    }).ToList()
-                })
-            .FirstOrDefault();
+                await InvokeAsync(StateHasChanged);
+                Playlist = await playListService.GetPlayLists(PlaylistId, CurrentUserId);               
+            });               
     }
 
-    private async Task<string> GetUserId()
+    private async Task HandleExceptionAsync(Func<Task> action)
     {
-        var user = (await authenticationState).User;
-        var userId = user.FindFirst(u => u.Type.Contains(ClaimTypes.NameIdentifier))?.Value;
-        return userId;
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            // Redirect to the Error page
+            var errorMessage = HttpUtility.UrlEncode(ex.Message);
+            navigationManager.NavigateTo($"/Error?message={errorMessage}", forceLoad: true);
+        }
     }
 
-    private void FavoriteTrack(long trackId)
+    private async Task FavoriteTrack(long trackId)
     {
+           // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, true);
+                await TrackMessageDisplay(trackId, "added", true);                             
+            });
+        
+           
+    }
+
+    private async Task TrackMessageDisplay(long trackId, string message,bool isFavourite)
+    {
+        var listName = string.Empty;
+        if (isFavourite)
+        {
+            listName = "Favorites.";
+        }
+
         var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} added to playlist Favorites.";
+        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} {message} to playlist {listName}";
+        await ReloadPage();
     }
 
-    private void UnfavoriteTrack(long trackId)
+    private async Task UnfavoriteTrack(long trackId)
     {
-        var track = Playlist.Tracks.FirstOrDefault(t => t.TrackId == trackId);
-        InfoMessage = $"Track {track.ArtistName} - {track.AlbumTitle} - {track.TrackName} removed from playlist Favorites.";
+          // Handle any Exception throw when Initializing
+            await HandleExceptionAsync(async () =>
+            {
+                await tracksServices.UpdateFavoriteTrackStatus(trackId, CurrentUserId, false);
+                await TrackMessageDisplay(trackId, "removed", true);                            
+            });     
     }
 
-    private void RemoveTrack(long trackId)
+    private async Task RemoveTrack(long trackId,long playListId)
     {
-        CloseInfoMessage();
+     // Handle any Exception throw when Initializing
+     await HandleExceptionAsync(async () =>
+           {
+            await tracksServices.RemoveTrackFromPlayList(trackId, playListId);
+            await TrackMessageDisplay(trackId, "removed", false);                             
+            });               
+    }
 
+    private async Task ReloadPage()
+    {
+        await Task.Delay(500);
+        navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
     }
 
     private void CloseInfoMessage()
